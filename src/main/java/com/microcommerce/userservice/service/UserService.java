@@ -3,14 +3,15 @@ package com.microcommerce.userservice.service;
 import com.microcommerce.userservice.dto.*;
 import com.microcommerce.userservice.model.User;
 import com.microcommerce.userservice.repository.UserRepository;
+import com.microcommerce.userservice.event.UserEvent;
+import com.microcommerce.userservice.service.UserEventPublisher;
 import org.springframework.beans.factory.annotation.Autowired;
-// Imports Spring Security temporairement désactivés (on les remettra plus tard)
-// import org.springframework.security.authentication.AuthenticationManager;
-// import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-// import org.springframework.security.core.userdetails.UserDetails;
-// import org.springframework.security.core.userdetails.UserDetailsService;
-// import org.springframework.security.core.userdetails.UsernameNotFoundException;
-// import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -28,19 +29,19 @@ import java.util.stream.Collectors;
  * - Conversion entre entités et DTOs
  */
 @Service
-public class UserService { // implements UserDetailsService temporairement désactivé pour simplifier
+public class UserService implements UserDetailsService {
     
     @Autowired
     private UserRepository userRepository;
     
-    // @Autowired
-    // private PasswordEncoder passwordEncoder;
+    @Autowired
+    private UserEventPublisher userEventPublisher;
     
-    // @Autowired
-    // private JwtService jwtService;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     
-    // @Autowired
-    // private AuthenticationManager authenticationManager;
+    @Autowired
+    private AuthenticationManager authenticationManager;
     
     /**
      * Inscription d'un nouvel utilisateur
@@ -55,14 +56,14 @@ public class UserService { // implements UserDetailsService temporairement désa
         User user = new User();
         user.setName(request.getName());
         user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword()); // TODO: Hash du mot de passe avec PasswordEncoder plus tard
+        user.setPassword(passwordEncoder.encode(request.getPassword())); // Hash du mot de passe
         user.setRole("USER"); // Rôle par défaut pour les nouveaux utilisateurs
         
         // On sauvegarde en base
         User savedUser = userRepository.save(user);
         
-        // TODO: Générer le token JWT plus tard plus tard
-        String token = "temporary-token";
+        // Le token JWT sera généré par AuthService
+        String token = "registration-success";
         
         return new AuthResponse(
             token,
@@ -74,30 +75,17 @@ public class UserService { // implements UserDetailsService temporairement désa
     }
     
     /**
-     * Connexion d'un utilisateur
+     * Connexion d'un utilisateur (utilisée par AuthService)
      */
-    public AuthResponse login(LoginRequest request) {
-        // TODO: Authentifier l'utilisateur avec AuthenticationManager plus tard
-        
-        // On récupère l'utilisateur
-        User user = userRepository.findByEmail(request.getEmail())
-            .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
-        
-        // TODO: Vérifier le mot de passe avec le hash plus tard
-        if (!user.getPassword().equals(request.getPassword())) {
-            throw new RuntimeException("Mot de passe incorrect");
-        }
-        
-        // TODO: Générer le token JWT :3
-        String token = "temporary-token";
-        
-        return new AuthResponse(
-            token,
-            user.getId(),
-            user.getEmail(),
-            user.getName(),
-            user.getRole()
+    public User authenticateUser(String email, String password) {
+        // Authentifier l'utilisateur avec AuthenticationManager
+        authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(email, password)
         );
+        
+        // Retourner l'utilisateur authentifié
+        return userRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
     }
     
     /**
@@ -145,12 +133,16 @@ public class UserService { // implements UserDetailsService temporairement désa
         user.setName(request.getName());
         user.setEmail(request.getEmail());
         
-        // TODO: Mettre à jour le mot de passe avec PasswordEncoder plus tard
+        // Mettre à jour le mot de passe avec PasswordEncoder
         if (request.getPassword() != null && !request.getPassword().isEmpty()) {
-            user.setPassword(request.getPassword());
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
         
         User updatedUser = userRepository.save(user);
+        
+        // Publier l'événement de mise à jour d'utilisateur
+        userEventPublisher.publishUserUpdated(updatedUser);
+        
         return convertToUserResponse(updatedUser);
     }
     
@@ -158,10 +150,13 @@ public class UserService { // implements UserDetailsService temporairement désa
      * Supprime un utilisateur
      */
     public void deleteUser(String id) {
-        if (!userRepository.existsById(id)) {
-            throw new RuntimeException("Utilisateur non trouvé avec l'ID: " + id);
-        }
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé avec l'ID: " + id));
+        
         userRepository.deleteById(id);
+        
+        // Publier l'événement de suppression d'utilisateur
+        userEventPublisher.publishUserDeleted(user.getId());
     }
     
     /**
@@ -184,16 +179,46 @@ public class UserService { // implements UserDetailsService temporairement désa
             .collect(Collectors.toList());
     }
     
+    /**
+     * Crée un nouvel utilisateur
+     */
+    public User createUser(User user) {
+        // Validation basique
+        if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
+            throw new RuntimeException("L'email est obligatoire");
+        }
+        
+        if (user.getName() == null || user.getName().trim().isEmpty()) {
+            throw new RuntimeException("Le nom est obligatoire");
+        }
+        
+        // Vérifier si l'email existe déjà
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new RuntimeException("Un utilisateur avec cet email existe déjà");
+        }
+        
+        // Encoder le mot de passe
+        if (user.getPassword() != null) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
+        
+        User savedUser = userRepository.save(user);
+        
+        // Publier l'événement de création d'utilisateur
+        userEventPublisher.publishUserCreated(savedUser);
+        
+        return savedUser;
+    }
 
     
     /**
-     * Méthode requise par UserDetailsService pour Spring Security - on la remettra plus tard
+     * Méthode requise par UserDetailsService pour Spring Security
      */
-    // @Override
-    // public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-    //     return userRepository.findByEmail(email)
-    //         .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé avec l'email: " + email));
-    // }
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        return userRepository.findByEmail(email)
+            .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé avec l'email: " + email));
+    }
     
     /**
      * Récupère les infos d'un utilisateur pour les autres services

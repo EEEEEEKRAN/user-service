@@ -2,7 +2,9 @@ package com.microcommerce.userservice.controller;
 
 import com.microcommerce.userservice.dto.AuthResponse;
 import com.microcommerce.userservice.dto.LoginRequest;
+import com.microcommerce.userservice.dto.LoginResponse;
 import com.microcommerce.userservice.dto.RegisterRequest;
+import com.microcommerce.userservice.service.AuthService;
 import com.microcommerce.userservice.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,9 @@ public class AuthController {
     @Autowired
     private UserService userService;
     
+    @Autowired
+    private AuthService authService;
+    
     /**
      * Inscription d'un nouvel utilisateur
      * POST /api/auth/register
@@ -44,18 +49,72 @@ public class AuthController {
     }
     
     /**
-     * Connexion d'un utilisateur
+     * Connexion d'un utilisateur avec JWT
      * POST /api/auth/login
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         try {
-            AuthResponse response = userService.login(request);
+            LoginResponse response = authService.login(request);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of(
                 "error", "Erreur lors de la connexion",
-                "message", "Email ou mot de passe incorrect"
+                "message", e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * Validation d'un token JWT
+     * POST /api/auth/validate
+     */
+    @PostMapping("/validate")
+    public ResponseEntity<?> validateToken(@RequestHeader("Authorization") String authHeader) {
+        try {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Token manquant",
+                    "message", "Header Authorization avec Bearer token requis"
+                ));
+            }
+
+            String token = authHeader.substring(7);
+            boolean isValid = authService.validateToken(token);
+
+            return ResponseEntity.ok(Map.of(
+                "valid", isValid,
+                "message", isValid ? "Token valide" : "Token invalide"
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Erreur de validation",
+                "message", e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * Rafraîchissement d'un token JWT
+     * POST /api/auth/refresh
+     */
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@RequestHeader("Authorization") String authHeader) {
+        try {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Token manquant",
+                    "message", "Header Authorization avec Bearer token requis"
+                ));
+            }
+
+            String token = authHeader.substring(7);
+            LoginResponse response = authService.refreshToken(token);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Échec du rafraîchissement",
+                "message", e.getMessage()
             ));
         }
     }

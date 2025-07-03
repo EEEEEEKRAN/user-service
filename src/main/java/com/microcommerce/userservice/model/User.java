@@ -3,17 +3,16 @@ package com.microcommerce.userservice.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-// Imports Spring Security temporairement désactivés (on les remettra plus tard)
-// import org.springframework.security.core.GrantedAuthority;
-// import org.springframework.security.core.authority.SimpleGrantedAuthority;
-// import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-// import java.util.Collection;
-// import java.util.List;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Notre entité User pour MongoDB
@@ -22,7 +21,7 @@ import jakarta.validation.constraints.Size;
  * Mais on a temporairement désactivé ça pour simplifier le démarrage
  */
 @Document(collection = "users")
-public class User { // implements UserDetails - temporairement désactivé pour simplifier
+public class User implements UserDetails {
     
     @Id
     private String id;
@@ -43,7 +42,11 @@ public class User { // implements UserDetails - temporairement désactivé pour 
     // Rôle de l'utilisateur (USER, ADMIN, etc.) - important pour la sécurité
     private String role = "USER";
     
-
+    // Champs pour UserDetails
+    private boolean accountNonExpired = true;
+    private boolean accountNonLocked = true;
+    private boolean credentialsNonExpired = true;
+    private boolean enabled = true;
     
     // Constructeurs - le classique comme d'hab
     public User() {}
@@ -54,8 +57,7 @@ public class User { // implements UserDetails - temporairement désactivé pour 
         this.password = password;
     }
     
-    // Méthodes de UserDetails pour Spring Security - on les remettra plus tard, sinon ça va être chiant pour manipuler
-    /*
+    // Méthodes de UserDetails pour Spring Security
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role));
@@ -85,7 +87,6 @@ public class User { // implements UserDetails - temporairement désactivé pour 
     public boolean isEnabled() {
         return enabled;
     }
-    */
     
     // Getters et Setters - rien d'extraordinaire, gros c'est toujours la même chose quoi
     public String getId() { return id; }
@@ -103,7 +104,10 @@ public class User { // implements UserDetails - temporairement désactivé pour 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
     
-
+    public void setAccountNonExpired(boolean accountNonExpired) { this.accountNonExpired = accountNonExpired; }
+    public void setAccountNonLocked(boolean accountNonLocked) { this.accountNonLocked = accountNonLocked; }
+    public void setCredentialsNonExpired(boolean credentialsNonExpired) { this.credentialsNonExpired = credentialsNonExpired; }
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
     
     @Override
     public String toString() {
