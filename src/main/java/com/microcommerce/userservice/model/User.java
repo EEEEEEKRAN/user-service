@@ -3,7 +3,7 @@ package com.microcommerce.userservice.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-// Imports Spring Security temporairement désactivés
+// Imports Spring Security temporairement désactivés (on les remettra plus tard)
 // import org.springframework.security.core.GrantedAuthority;
 // import org.springframework.security.core.authority.SimpleGrantedAuthority;
 // import org.springframework.security.core.userdetails.UserDetails;
@@ -16,36 +16,36 @@ import jakarta.validation.constraints.Size;
 // import java.util.List;
 
 /**
- * Entité User pour MongoDB
+ * Notre entité User pour MongoDB
  * 
- * Implémente UserDetails pour l'intégration avec Spring Security
- * Ça nous permet d'utiliser directement cette classe pour l'authentification
+ * Normalement ça implémente UserDetails pour Spring Security
+ * Mais on a temporairement désactivé ça pour simplifier le démarrage
  */
 @Document(collection = "users")
-public class User { // implements UserDetails - temporairement désactivé
+public class User { // implements UserDetails - temporairement désactivé pour simplifier
     
     @Id
     private String id;
     
     @NotBlank(message = "Le nom est obligatoire")
     @Size(min = 2, max = 100, message = "Le nom doit faire entre 2 et 100 caractères")
-    private String name; // Un seul champ nom au lieu de firstName/lastName
+    private String name; // Un seul champ nom, plus simple que firstName/lastName
     
     @NotBlank(message = "L'email est obligatoire")
     @Email(message = "Format d'email invalide")
-    @Indexed(unique = true) // Index unique sur l'email
+    @Indexed(unique = true) // Index unique sur l'email - pas de doublons !
     private String email;
     
     @NotBlank(message = "Le mot de passe est obligatoire")
     @Size(min = 6, message = "Le mot de passe doit faire au moins 6 caractères")
     private String password;
     
-    // Rôle de l'utilisateur (USER, ADMIN, etc.) - on garde ça pour la sécurité
+    // Rôle de l'utilisateur (USER, ADMIN, etc.) - important pour la sécurité
     private String role = "USER";
     
 
     
-    // Constructeurs
+    // Constructeurs - le classique comme d'hab
     public User() {}
     
     public User(String name, String email, String password) {
@@ -54,7 +54,7 @@ public class User { // implements UserDetails - temporairement désactivé
         this.password = password;
     }
     
-    // Méthodes de UserDetails pour Spring Security - temporairement désactivées
+    // Méthodes de UserDetails pour Spring Security - on les remettra plus tard, sinon ça va être chiant pour manipuler
     /*
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -63,7 +63,7 @@ public class User { // implements UserDetails - temporairement désactivé
     
     @Override
     public String getUsername() {
-        return email; // On utilise l'email comme username
+        return email; // On utilise l'email comme username, plus pratique
     }
     
     @Override
@@ -87,7 +87,7 @@ public class User { // implements UserDetails - temporairement désactivé
     }
     */
     
-    // Getters et Setters
+    // Getters et Setters - rien d'extraordinaire, gros c'est toujours la même chose quoi
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     

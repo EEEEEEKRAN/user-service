@@ -8,7 +8,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 // import org.springframework.security.access.prepost.PreAuthorize;
-// Imports Spring Security temporairement désactivés
+// Imports Spring Security temporairement désactivés (on les remettra plus tard)
 // import org.springframework.security.core.Authentication;
 // import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -17,13 +17,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Contrôleur pour la gestion des utilisateurs
+ * Notre contrôleur pour gérer les utilisateurs
  * 
- * Gère tous les endpoints liés aux utilisateurs :
- * - CRUD des utilisateurs
+ * Tout ce qu'il faut pour les utilisateurs :
+ * - CRUD classique
  * - Recherche et filtrage
  * - Gestion des profils
- * - Administration
+ * - Administration (pour les admins)
  */
 @RestController
 @RequestMapping("/api/users")
@@ -34,25 +34,25 @@ public class UserController {
     private UserService userService;
     
     /**
-     * Récupérer tous les utilisateurs (admin seulement)
+     * Récupère tous les utilisateurs (normalement admin seulement)
      * GET /api/users
      */
     @GetMapping
-    // @PreAuthorize("hasRole('ADMIN')")
+    // @PreAuthorize("hasRole('ADMIN')") // Temporairement désactivé // Temporairement désactivé
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         List<UserResponse> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
     }
     
     /**
-     * Récupérer un utilisateur par ID
+     * Chope un utilisateur par son ID
      * GET /api/users/{id}
      */
     @GetMapping("/{id}")
-    // @PreAuthorize("hasRole('ADMIN') or @userService.isOwner(#id, authentication.name)")
+    // @PreAuthorize("hasRole('ADMIN') or @userService.isOwner(#id, authentication.name)") // Temporairement désactivé
     public ResponseEntity<?> getUserById(@PathVariable String id) {
         try {
-            // TODO: Vérifier les permissions après réactivation de Spring Security
+            // TODO: Vérifier les permissions quand on remettra Spring Security
             UserResponse user = userService.getUserById(id);
             return ResponseEntity.ok(user);
         } catch (RuntimeException e) {
@@ -61,17 +61,17 @@ public class UserController {
     }
     
     /**
-     * Récupérer le profil de l'utilisateur connecté
+     * Récupère le profil de l'utilisateur connecté
      * GET /api/users/me
      */
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getCurrentUser() {
-        // TODO: Implémenter après réactivation de Spring Security
+        // TODO: Implémenter quand on remettra Spring Security
         return ResponseEntity.ok().build();
     }
     
     /**
-     * Mettre à jour un utilisateur
+     * Met à jour un utilisateur
      * PUT /api/users/{id}
      */
     @PutMapping("/{id}")
@@ -81,7 +81,7 @@ public class UserController {
             @Valid @RequestBody RegisterRequest request
     ) {
         try {
-            // TODO: Vérifier les permissions après réactivation de Spring Security
+            // TODO: Vérifier les permissions quand on remettra Spring Security
             UserResponse updatedUser = userService.updateUser(id, request);
             return ResponseEntity.ok(updatedUser);
         } catch (RuntimeException e) {
@@ -93,11 +93,11 @@ public class UserController {
     }
     
     /**
-     * Supprimer un utilisateur (admin seulement)
+     * Supprime un utilisateur (normalement admin seulement)
      * DELETE /api/users/{id}
      */
     @DeleteMapping("/{id}")
-    // @PreAuthorize("hasRole('ADMIN')")
+    // @PreAuthorize("hasRole('ADMIN')") // Temporairement désactivé
     public ResponseEntity<?> deleteUser(@PathVariable String id) {
         try {
             userService.deleteUser(id);
@@ -110,7 +110,7 @@ public class UserController {
     }
     
     /**
-     * Rechercher des utilisateurs par nom (admin seulement)
+     * Recherche des utilisateurs par nom (normalement admin seulement)
      * GET /api/users/search?name=...
      */
     @GetMapping("/search")
@@ -121,11 +121,11 @@ public class UserController {
     }
     
     /**
-     * Récupérer les utilisateurs par rôle (admin seulement)
+     * Récupère les utilisateurs par rôle (normalement admin seulement)
      * GET /api/users/role/{role}
      */
     @GetMapping("/role/{role}")
-    // @PreAuthorize("hasRole('ADMIN')")
+    // @PreAuthorize("hasRole('ADMIN')") // Temporairement désactivé
     public ResponseEntity<List<UserResponse>> getUsersByRole(@PathVariable String role) {
         List<UserResponse> users = userService.getUsersByRole(role);
         return ResponseEntity.ok(users);
@@ -134,7 +134,7 @@ public class UserController {
 
     
     /**
-     * Statistiques des utilisateurs
+     * Statistiques des utilisateurs (nombre total, par rôle, etc.)
      * GET /api/users/stats
      */
     @GetMapping("/stats")
@@ -144,8 +144,8 @@ public class UserController {
     }
     
     /**
-     * Endpoint interne pour la communication inter-services
-     * Retourne les infos essentielles d'un utilisateur (sans mot de passe)
+     * Endpoint interne pour les autres services
+     * Retourne juste les infos essentielles d'un utilisateur (sans mot de passe évidemment)
      * GET /api/internal/users/{id}
      */
     @GetMapping("/internal/{id}")
@@ -159,7 +159,7 @@ public class UserController {
     }
     
     /**
-     * Test de l'API utilisateurs
+     * Test de l'API utilisateurs (pour vérifier que tout fonctionne)
      * GET /api/users/test
      */
     @GetMapping("/test")

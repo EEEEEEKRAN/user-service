@@ -11,6 +11,14 @@ spring:
       port: 27017
       database: userservice_db
   
+  # Configuration RabbitMQ
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: admin
+    password: password123
+    virtual-host: /
+  
   security:
     # Configuration pour JWT
     jwt:
