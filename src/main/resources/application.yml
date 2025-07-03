@@ -1,0 +1,34 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: user-service
+  
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: userservice_db
+  
+  security:
+    # Configuration pour JWT
+    jwt:
+      secret: mySecretKey123456789012345678901234567890
+      expiration: 86400000 # 24 heures en millisecondes
+
+logging:
+  level:
+    com.microcommerce.userservice: DEBUG
+    org.springframework.security: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

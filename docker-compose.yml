@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # Service MongoDB pour le user-service
+  mongodb-user:
+    image: mongo:latest
+    container_name: mongodb-user-service
+    ports:
+      - "27018:27017"  # Port différent pour éviter les conflits
+    environment:
+      MONGO_INITDB_DATABASE: userservice_db
+    volumes:
+      - mongodb_user_data:/data/db
+    networks:
+      - user-service-network
+
+  # Service utilisateur
+  user-service:
+    build: .
+    container_name: user-service-app
+    ports:
+      - "8082:8082"
+    environment:
+      # Configuration MongoDB pour Docker
+      SPRING_DATA_MONGODB_HOST: mongodb-user
+      SPRING_DATA_MONGODB_PORT: 27017
+      SPRING_DATA_MONGODB_DATABASE: userservice_db
+    depends_on:
+      - mongodb-user
+    networks:
+      - user-service-network
+    # Attend que MongoDB soit prêt
+    restart: on-failure
+
+volumes:
+  mongodb_user_data:
+
+networks:
+  user-service-network:
+    driver: bridge
