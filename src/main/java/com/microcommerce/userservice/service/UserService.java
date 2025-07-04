@@ -6,6 +6,7 @@ import com.microcommerce.userservice.repository.UserRepository;
 import com.microcommerce.userservice.event.UserEvent;
 import com.microcommerce.userservice.service.UserEventPublisher;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -41,6 +42,7 @@ public class UserService implements UserDetailsService {
     private PasswordEncoder passwordEncoder;
     
     @Autowired
+    @Lazy
     private AuthenticationManager authenticationManager;
     
     /**
