@@ -17,7 +17,7 @@ COPY src src
 RUN mvn clean package -DskipTests
 
 # Étape finale avec une image Java légère
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:24-jre-alpine
 
 WORKDIR /app
 

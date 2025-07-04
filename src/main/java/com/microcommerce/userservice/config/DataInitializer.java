@@ -4,6 +4,7 @@ import com.microcommerce.userservice.model.User;
 import com.microcommerce.userservice.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 /**
@@ -18,8 +19,8 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private UserRepository userRepository;
     
-    // @Autowired
-    // private PasswordEncoder passwordEncoder;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     
     @Override
     public void run(String... args) throws Exception {
@@ -36,7 +37,7 @@ public class DataInitializer implements CommandLineRunner {
         User admin = new User();
         admin.setName("Admin System");
         admin.setEmail("admin@microcommerce.com");
-        admin.setPassword("admin123"); // TODO: Hash avec PasswordEncoder
+        admin.setPassword(passwordEncoder.encode("admin123"));
         admin.setRole("ADMIN");
         userRepository.save(admin);
         
@@ -66,7 +67,7 @@ public class DataInitializer implements CommandLineRunner {
         User user = new User();
         user.setName(name);
         user.setEmail(email);
-        user.setPassword(password); // TODO: Hash avec PasswordEncoder
+        user.setPassword(passwordEncoder.encode(password));
         user.setRole("USER");
         return user;
     }
